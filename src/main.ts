@@ -1,114 +1,70 @@
+import { Plugin } from 'obsidian';
+import { ColumnsModal } from './columns-modal';
+import { VaultModel } from './model';
 import {
-	Editor,
-	MarkdownView,
-	MarkdownFileInfo,
-	Modal,
-	Notice,
-	Plugin,
-} from 'obsidian';
-import {
+	ColumnViewSettings,
+	ColumnViewSettingTab,
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
 } from './settings';
 
-// Remember to rename these classes and interfaces!
-
-export default class MyPlugin extends Plugin {
-	settings!: MyPluginSettings;
+export default class ColumnViewPlugin extends Plugin {
+	settings!: ColumnViewSettings;
+	model!: VaultModel;
+	activeModal: ColumnsModal | null = null;
 
 	async onload() {
 		await this.loadSettings();
+		this.model = new VaultModel(this.app);
 
 		// This creates an icon in the left ribbon.
-		this.addRibbonIcon('dice', 'Sample', (_evt: MouseEvent) => {
+		this.addRibbonIcon('columns-3', 'Column view', (_evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
+			this.openBrowser();
 		});
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status bar text');
 
 		// This adds a simple command that can be triggered anywhere
 		this.addCommand({
-			id: 'open-modal-simple',
-			name: 'Open modal (simple)',
+			id: 'open-browser',
+			name: 'Open browser',
 			callback: () => {
-				new SampleModal(this.app).open();
-			},
-		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'replace-selected',
-			name: 'Replace selected content',
-			editorCallback: (
-				editor: Editor,
-				_ctx: MarkdownView | MarkdownFileInfo,
-			) => {
-				editor.replaceSelection('Sample editor command');
-			},
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-modal-complex',
-			name: 'Open modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView =
-					this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
-
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
-				}
-				return false;
+				this.openBrowser();
 			},
 		});
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new ColumnViewSettingTab(this.app, this));
 
-		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
-		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(activeDocument, 'click', (_evt: MouseEvent) => {
-			new Notice('Click');
-		});
-
-		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(
-			window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000),
-		);
+		// Any change to files or links can alter the virtual tree. These events
+		// are removed automatically when the plugin is disabled.
+		const changed = () => {
+			this.model.invalidate();
+			this.activeModal?.scheduleRefresh();
+		};
+		this.registerEvent(this.app.vault.on('create', changed));
+		this.registerEvent(this.app.vault.on('delete', changed));
+		this.registerEvent(this.app.vault.on('rename', changed));
+		this.registerEvent(this.app.metadataCache.on('changed', changed));
+		this.registerEvent(this.app.metadataCache.on('resolved', changed));
 	}
 
-	onunload() {}
+	onunload() {
+		this.activeModal?.close();
+	}
+
+	openBrowser() {
+		if (this.activeModal) return;
+		new ColumnsModal(this).open();
+	}
 
 	async loadSettings() {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			(await this.loadData()) as Partial<MyPluginSettings>,
+			(await this.loadData()) as Partial<ColumnViewSettings>,
 		);
 	}
 
 	async saveSettings() {
 		await this.saveData(this.settings);
-	}
-}
-
-class SampleModal extends Modal {
-	onOpen() {
-		const { contentEl } = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const { contentEl } = this;
-		contentEl.empty();
 	}
 }

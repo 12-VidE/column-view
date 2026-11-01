@@ -6,3 +6,233 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* Column View: uses the active Obsidian theme's variables only (fonts, colours,
+ * radii), so it looks like the rest of your vault, not like a terminal. */
+
+/* ---- the floating window ------------------------------------------------ */
+.modal.vc-modal {
+	--vc-col-width: clamp(240px, 24vw, 340px);
+	width: min(1500px, 94vw);
+	max-width: none;
+	height: min(820px, 88vh);
+	max-height: none;
+	padding: 0;
+	overflow: hidden;
+	border-radius: var(--radius-l);
+	box-shadow: 0 24px 64px rgba(0, 0, 0, 0.28);
+	animation: vc-float-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes vc-float-in {
+	from {
+		opacity: 0;
+		transform: translateY(18px) scale(0.97);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.modal.vc-modal {
+		animation: none;
+	}
+}
+
+.vc-modal .modal-close-button {
+	display: none; /* Esc, or a click outside, closes it */
+}
+
+.vc-modal .modal-content.vc-root {
+	height: 100%;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	outline: none;
+}
+
+/* ---- top: the complete path, big ---------------------------------------- */
+.vc-header {
+	flex: 0 0 auto;
+	display: flex;
+	align-items: flex-start;
+	gap: var(--size-4-4);
+	padding: var(--size-4-6) var(--size-4-8) var(--size-4-4);
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.vc-header-main {
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.vc-path {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0 0.45em;
+	font-size: calc(var(--font-ui-large) * 1.25);
+	line-height: 1.35;
+	font-weight: var(--font-semibold);
+	color: var(--text-muted);
+}
+
+.vc-seg.is-last {
+	color: var(--text-normal);
+}
+
+.vc-sep {
+	font-weight: var(--font-normal);
+	color: var(--text-faint);
+}
+
+.vc-real {
+	margin-top: var(--size-4-1);
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: var(--font-ui-small);
+	color: var(--text-faint);
+}
+
+.vc-real:empty {
+	display: none;
+}
+
+.vc-locate {
+	flex: 0 0 auto;
+}
+
+.vc-locate svg {
+	width: 22px;
+	height: 22px;
+}
+
+/* ---- the columns -------------------------------------------------------- */
+.vc-columns {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	display: flex;
+	overflow: hidden; /* it is scrolled by the keyboard / clicks, never by hand */
+	/* columns that are cut off at the edges fade out instead of ending abruptly */
+	-webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+	mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent);
+}
+
+/* Room on both sides so even the first and last column can sit in the middle. */
+.vc-columns::before,
+.vc-columns::after {
+	content: '';
+	flex: 0 0 calc(50% - var(--vc-col-width) / 2);
+}
+
+.vc-col {
+	flex: 0 0 var(--vc-col-width);
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	border-right: 1px solid var(--background-modifier-border);
+}
+
+.vc-list {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	padding: var(--size-4-3) var(--size-4-2);
+	scrollbar-width: thin;
+}
+
+.vc-empty {
+	padding: var(--size-4-3) var(--size-4-4);
+	color: var(--text-faint);
+	font-size: var(--font-ui-medium);
+}
+
+/* ---- a row: [custom folder icon] name [>] -------------------------------- */
+.vc-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	min-height: 40px; /* keep in sync with ROW_H in columns-modal.ts */
+	padding: 0 var(--size-4-4);
+	border-radius: var(--radius-m);
+	cursor: pointer;
+	font-size: calc(var(--font-ui-medium) * 1.2);
+	line-height: 1.3;
+	color: var(--text-normal);
+}
+
+.vc-row:hover {
+	background: var(--background-modifier-hover);
+}
+
+.vc-name {
+	flex: 0 1 auto;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+/* The ">" right after a folder's name */
+.vc-chev {
+	flex: 0 0 auto;
+	color: var(--text-faint);
+}
+
+/* A custom icon, only when one was set in Iconize */
+.vc-icon {
+	flex: 0 0 auto;
+	display: inline-flex;
+	width: 20px;
+	height: 20px;
+}
+
+.vc-icon svg {
+	width: 20px;
+	height: 20px;
+}
+
+/* Folder Notes: an underlined name = it has a note, and clicking the name opens it */
+.vc-has-note .vc-name {
+	text-decoration: underline;
+	text-decoration-thickness: 1px;
+	text-underline-offset: 4px;
+}
+
+.vc-has-note .vc-name:hover {
+	color: var(--text-accent);
+	text-decoration-thickness: 2px;
+}
+
+/* ---- where you are ------------------------------------------------------- */
+.vc-col:not(.is-active) .vc-name {
+	color: var(--text-muted);
+}
+
+/* selected row in a column that does not have the keyboard */
+.vc-row.is-selected {
+	background: var(--background-modifier-active-hover);
+}
+
+/* selected row in the column you are working in */
+.vc-col.is-active .vc-row.is-selected {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.vc-col.is-active .vc-row.is-selected .vc-chev,
+.vc-col.is-active .vc-row.is-selected .vc-name {
+	color: inherit;
+}
+
+.vc-col.is-active .vc-row.is-selected .vc-chev {
+	opacity: 0.75;
+}
+
